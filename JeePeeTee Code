@@ -1,0 +1,76 @@
+#include <AFMotor.h>
+
+// Motor connections
+AF_DCMotor motor1(1);
+AF_DCMotor motor2(2);
+
+// IR sensor connections
+#define IR_LEFT A0
+#define IR_CENTER A1
+#define IR_RIGHT A2
+
+// Photocell connection
+#define PHOTOCELL A3
+
+// Threshold for detecting black line
+#define THRESHOLD 600
+
+void setup() {
+  Serial.begin(9600);
+  
+  // Motor setup
+  motor1.setSpeed(200);
+  motor2.setSpeed(200);
+  
+  // IR sensor setup
+  pinMode(IR_LEFT, INPUT);
+  pinMode(IR_CENTER, INPUT);
+  pinMode(IR_RIGHT, INPUT);
+  
+  // Photocell setup
+  pinMode(PHOTOCELL, INPUT);
+}
+
+void loop() {
+  // Read IR sensor values
+  int ir_left = analogRead(IR_LEFT);
+  int ir_center = analogRead(IR_CENTER);
+  int ir_right = analogRead(IR_RIGHT);
+  
+  // Read photocell value
+  int photocell = analogRead(PHOTOCELL);
+  
+  // Calculate the error
+  int error = (ir_left - ir_right);
+  
+  // If the robot is off the track, stop and reverse
+  if (photocell < THRESHOLD) {
+    motor1.run(BACKWARD);
+    motor2.run(BACKWARD);
+    delay(500);
+  }
+  else {
+    // Adjust the motor speeds based on the error
+    int motor_speed_left = 200 - error / 2;
+    int motor_speed_right = 200 + error / 2;
+    
+    // Set the motor speeds
+    motor1.setSpeed(motor_speed_left);
+    motor2.setSpeed(motor_speed_right);
+    
+    // Move forward
+    motor1.run(FORWARD);
+    motor2.run(FORWARD);
+  }
+  
+  // Debug output
+  Serial.print(ir_left);
+  Serial.print("\t");
+  Serial.print(ir_center);
+  Serial.print("\t");
+  Serial.print(ir_right);
+  Serial.print("\t");
+  Serial.print(error);
+  Serial.print("\t");
+  Serial.println(photocell);
+}
